@@ -83,7 +83,7 @@
 								<el-col :span="24">
 										<el-row v-if="otherInput.length > 0">
 												<item-filed-other :filed.sync="item" v-for="(item,index) in otherInput" :key="index"
-																														style="margin-top:5px;" :id="index" :otherFInput="otherInput"
+																														style="margin-top:5px;" :id="index" :otherInput="otherInput"
 																														@clear="showField = false"></item-filed-other>
 										</el-row>
 								</el-col>
@@ -520,7 +520,11 @@
 								}
 								this.otherInput.forEach(item => {
 										outputArray.push(item.output)
-										inputArray.push(item.input)
+										if (!item.input) {
+											inputArray.push('__EMPTY__')
+										} else {
+											inputArray.push(item.input)
+										}
 										send['convert.' + item.output] = item.input + ',' + item.defaultValue
 								})
 								send['input.cols'] = inputArray.join(',')
@@ -612,6 +616,7 @@
 												return false
 										}
 										res = this.GenerateJson(res.data)
+										console.log(res)
 										this.task.name = res['identity']
 										this.task.describe = res['desc']
 										this.task.interval = res['interval']
@@ -675,13 +680,14 @@
 										//												send['convert.' + item.output] = item.input + ',' + item.defaultValue
 										//										})
 										this.otherInput = []
-										if (res['input.cols'] && res['input.cols'].length > 0) {
+										if (res['output.cols'] && res['output.cols'].length > 0) {
 												let inputArray = res['input.cols'].split(',')
 												let outputArray = res['output.cols'].split(',')
-												inputArray.forEach((item, index) => {
+												console.log(inputArray, outputArray)
+												outputArray.forEach((item, index) => {
 														let temp = {}
-														temp.output = outputArray[index]
-														temp.input = item
+														temp.output = item
+														temp.input = index >= inputArray.length ? '' : inputArray[index]
 														let defaultStr = res['convert.' + temp.output]
 														let pos = defaultStr.indexOf(',')
 														temp.defaultValue = defaultStr.substring(pos + 1)
@@ -727,7 +733,7 @@
 										}
 								})
 						},
-						//TODO: 获取字段插入到InputMapping表单。
+						// TODO: 获取字段插入到InputMapping表单。
 						getColsFromSQL () {
 								let params = {
 										'input.sql': this.db.input.sql

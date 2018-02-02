@@ -54,6 +54,7 @@
 				components: {commonRow, commonCol},
 				methods: {
 						del (i) {
+							console.log(this.otherInput)
 								this.otherInput.splice(i, 1)
 								if (this.otherInput.length === 0) {
 										this.$emit('clear')
