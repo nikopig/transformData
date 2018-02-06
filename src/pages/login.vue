@@ -1,11 +1,12 @@
 <template>
-	<div class="login" >
+	<div class="login" :style="loginIn" >
 		<div class="login-header">
 			<h1>通用数据传输平台</h1>
 			<h5>GENERAL  ADTA  TRANSFER  PLATFORM</h5>
 		</div>
 		<div class="login-wrapper">
 			<div class="login-background">
+
 			</div>
 			<div class="login-box" :style="loginBox">
 				<h1 style="">用户登录</h1>
@@ -44,6 +45,7 @@
 		components: {},
 		data () {
 			return {
+				loginIn: null,
 				loginWrapper: null,
 				loginBox: null,
 				login: {
@@ -57,13 +59,15 @@
 		computed: {},
 		methods: {
 			setStyle () {
-				this.loginWrapper = {
+				this.loginIn = {
 					width: window.innerWidth + 'px',
 					height: window.innerHeight + 'px'
 				}
 				this.loginBox = {
 
 				}
+				console.log(this.loginIn.width)
+				console.log(this.loginIn.height)
 			},
 			Login () {
 				// // if (this.login.verify !== this.login.codes) {
@@ -105,47 +109,56 @@
 </script>
 <style lang="less">
 	.login {
-		height: 100%;
-		width: 100%;
-		overflow: hidden;
+		/*overflow: hidden;*/
+		display: flex;
+		flex-flow: column;
 		.login-header {
-			height: 94px;
+			position: fixed;
+			z-index: 99;
+			top:0px;
+			height: 50px;
 			padding-left: 36px;
 			width: 100%;
 			background-color: #fff;
-			padding-top: 18px;
+			padding-top: 12px;
 			-webkit-box-sizing: border-box;
 			-moz-box-sizing: border-box;
 			box-sizing: border-box;
+			overflow: hidden;
 			h1, h5 {
 				padding: 0;
 				margin: 0px;
 				color: #2273b4;
 			}
 			h1 {
-				font-size: 40px;
+				font-size: 20px;
 				margin-bottom: 2px;
+				letter-spacing: 3px;
 			}
 			h5 {
-
+				font-size: 10px;
 			}
 		}
 		.login-wrapper {
 			position: relative;
 			display: flex;
-			/*background-color: #0b44b6;*/
+			flex: 1;
+			background-color: #0b44b6;
 			background-color: #75b9e6;
+			margin-top: 60px;
+			margin-bottom: 28px;
+			width: 100%;
+			overflow: hidden;
 			.login-background {
-				background: url("../../static/image/bg-1.png") no-repeat 16px 0px;
+				background: url("../../static/image/bg-1.png") no-repeat 124px 0px;
 				background-size: 100% 100%;
-				height: 780px;
 				width: 100%;
 				margin-right: 515px;
 			}
 			.login-box {
 				position: absolute;
 				width: 515px;
-				transform: translate(0px, -67%);
+				transform: translate(0px, -64%);
 				min-height: 300px;
 				padding: 0px 134px 0px 62px;
 				margin: 0px auto;
@@ -160,17 +173,17 @@
 					height: 50px;
 					line-height: 50px;
 					border-bottom: 1px solid #fff;
-					margin-bottom: 22px;
+					margin-bottom: 10px;
 				}
 				.el-form-item {
-					margin-bottom: 16px;
+					margin-bottom: 10px;
 					.el-input {
-						height: 50px;
-						line-height: 50px;
+						height: 36px;
+						line-height: 36px;
 						input.el-input__inner {
 							position: relative;
-							height: 48px;
-							line-height: 48px;
+							height: 34px;
+							line-height: 34px;
 							border: 1px solid rgba(255, 255, 255, 0.1);
 							/*background: rgba(0, 0, 0, 0.1);*/
 							color:#6e6c77;
@@ -186,7 +199,7 @@
 					}
 					.el-button {
 						width: 100%;
-						height: 50px;
+						height: 38px;
 						background-color: #f0ac09;
 						border: 1px solid #f0ac09;
 						color: #fff;
@@ -206,7 +219,7 @@
 						color: #6e6c77;
 						background-color: #fff;
 						display: inline-block;
-						height: 50px;
+						height: 36px;
 						float: left;
 						line-height: 50px;
 						text-align: center;
@@ -216,7 +229,7 @@
 						background-color: #75b9e6;
 						border: 0;
 						width: 62px;
-						height: 50px;
+						height: 38px;
 						float: right;
 						padding: 0px;
 						margin-right: 4px;
@@ -227,6 +240,11 @@
 			}
 		}
 		.login-footer {
+			background-color: #fff;
+			z-index: 100;
+			position: fixed;
+			bottom: 0px;
+			width: 100%;
 			height: 28px;
 			p {
 				vertical-align: middle;
