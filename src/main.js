@@ -4,32 +4,32 @@ import Vue from 'vue'
 import axios from 'axios'
 import router from './router'
 import {
-  Form,
-  FormItem,
-  Input,
-  Select,
-  Option,
-  Row,
-  Col,
-  Button,
-  ButtonGroup,
-  RadioGroup,
-  Radio,
-  Table,
-  TableColumn,
-  Checkbox,
-  CheckboxGroup,
-	Autocomplete,
-	Card,
-	Menu,
-	Submenu,
-	MenuItem,
-	DatePicker,
-	Dropdown,
-	DropdownItem,
-	DropdownMenu,
-	MessageBox,
-	Tooltip
+    Form,
+    FormItem,
+    Input,
+    Select,
+    Option,
+    Row,
+    Col,
+    Button,
+    ButtonGroup,
+    RadioGroup,
+    Radio,
+    Table,
+    TableColumn,
+    Checkbox,
+    CheckboxGroup,
+    Autocomplete,
+    Card,
+    Menu,
+    Submenu,
+    MenuItem,
+    DatePicker,
+    Dropdown,
+    DropdownItem,
+    DropdownMenu,
+    MessageBox,
+    Tooltip
 } from 'element-ui'
 import './assets/css/normalize.css'
 import 'element-ui/lib/theme-chalk/index.css'
@@ -64,17 +64,24 @@ Vue.use(DropdownItem)
 Vue.use(DropdownMenu)
 Vue.use(Tooltip)
 
+Vue.component(Menu.name, Menu)
+Vue.component(Submenu.name, Submenu)
+Vue.component(MenuItem.name, MenuItem)
+
+console.log(Submenu.name)
+console.log(MenuItem.name)
+
 Vue.config.productionTip = false
 Vue.prototype.$http = axios
 Vue.prototype.$alert = (info) => {
 	return MessageBox.alert(info, '提示')
 }
-Vue.prototype.confirm = (info) => {
-	return MessageBox.confirm(info, '提示', {
-		confirmButtonText: '确定',
-		cancelButtonText: '取消',
-		type: 'warning'
-	})
+Vue.prototype.$confirm = (info) => {
+    return MessageBox.confirm(info, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+})
 }
 
 // 设置cookie

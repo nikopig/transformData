@@ -1,20 +1,69 @@
 <template>
-		<div class="menu" :class="{expanded: 'expanded'}">
-				<div class="menu">
-						<el-menu>
-								<el-menu-item :index="index + ''" v-for="(item, index) in menus" :key="index" @click.native="goRouter(index)">
-										<span>{{item}}</span>
-								</el-menu-item>
-						</el-menu>
-				</div>
-		</div>
+	<div class="main-menu">
+		<el-menu :collapse.sync="collapse">
+			<main-menu-item v-for="(item, index) in config" :config="item"></main-menu-item>
+		</el-menu>
+	</div>
 </template>
 
 <script>
+	import mainMenuItem from './main-menu-item'
 export default {
 	name: 'main-menu',
-	props: [],
-	components: {},
+	props: {
+		collapse: {
+			type: Boolean,
+			default: false
+		},
+		options: {
+			type: Object,
+			default () {
+				return {}
+			}
+		},
+		config: {
+			type: Array,
+			default () {
+				return [
+					{
+						title: '配置',
+						path: '/config',
+						params: {meta: 1},
+						icon: 'el-icon-query',
+						index: '1',
+						children: [
+							{
+								title: '配置更改',
+								path: '/configChange',
+								params: {meta: 1},
+								icon: 'el-icon-plus',
+								index: '1-1',
+								children: []
+							}
+						]
+					},
+					{
+						title: '异常',
+						path: '/error',
+						params: {meta: 1},
+						icon: 'el-icon-query',
+						index: '2',
+						children: [
+							{
+								title: '异常处理',
+								path: '/errorDeal',
+								params: {meta: 1},
+								icon: 'el-icon-plus',
+								index: '2-1',
+								children: []
+							}
+						]
+					}
+				]
+			}
+		}
+	},
+	components: {mainMenuItem},
 	data () {
 		return {
 			expanded: false,
@@ -22,8 +71,9 @@ export default {
 		}
 	},
 	computed: {
-		colapse () {
-			return !this.expanded
+		cn () {
+			let flag = !this.config.children || this.config.children.length <= 0
+			return flag ? 'MenuItem' : 'Submenu'
 		}
 	},
 	methods: {

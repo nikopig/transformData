@@ -29,6 +29,7 @@
 							</el-dropdown> -->
 				<!-- </div> -->
 			</div>
+			<!--<main-menu></main-menu>-->
 			<el-row :style="{ paddingTop: loged ?'60px' : 0 }">
 				<el-col :span="isLoginShowMenu" v-if="loged">
 					<el-menu :collapse="isCollapse" class="el-menu-vertical-demo" @select="goRouter">
