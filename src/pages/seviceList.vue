@@ -2,7 +2,7 @@
 	<div class="main-wrapper">
 		<div class="toolbar">
 			<div class="btn-box">
-				<el-button type="text" @click="goConfig(null)">
+				<el-button type="text" @click="goConfig()">
 					<i class="el-icon-plus"></i>
 					新增服务配置
 				</el-button>
@@ -17,7 +17,7 @@
 		<div class="common-condition-box">
 			<el-form :inline="true">
 				<el-form-item label="任务标识名称" prop="name">
-					<el-input v-model="condition.identity" placeholder="只能输入字母和数字"></el-input>
+					<el-input v-model="condition.identity"></el-input>
 				</el-form-item>
 				<el-form-item label="任务描述" prop="describe">
 					<el-input v-model="condition.describe"></el-input>
@@ -32,20 +32,25 @@
 		<div class="table-box">
 			<el-table :data="listData">
 				<el-table-column label="任务标识名称" prop="identity"></el-table-column>
-				<el-table-column label="任务状态" prop="configStatus"></el-table-column>
-				<el-table-column label="运行间隔时间" prop="interval"></el-table-column>
 				<el-table-column label="任务描述" prop="desc"></el-table-column>
+				<el-table-column label="任务状态" prop="configStatus"></el-table-column>
+				<el-table-column label="运行间隔时间" prop="interval" width="120px"></el-table-column>
 				<el-table-column label="操作" width="120px">
 					<template slot-scope="scope">
 						<el-button size="mini" type="primary" :loading="scope.row.running" @click="start(scope.$index, scope.row)">{{scope.row.statusText}}</el-button>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作">
+				<el-table-column label="操作" width="300px">
 					<template slot-scope="scope">
 						<el-button size="mini" type="danger" @click="stop(scope.$index, scope.row)">停止</el-button>
 						<el-button size="mini" @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
 						<el-button size="mini" @click="handleDelete(scope.$index, scope.row)">删除
 						</el-button>
+					</template>
+				</el-table-column>
+				<el-table-column label="数据">
+					<template slot-scope="scope">
+						<Pie :identity="scope.row.identity"></Pie>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -55,11 +60,11 @@
 
 <script>
 	import Api from '@/utils/api.js'
-
+	import Pie from '@/components/pie'
 	export default {
 		name: 'seviceList',
 		props: [],
-		components: {},
+		components: {Pie},
 		data () {
 			return {
 				originData: [],
@@ -83,22 +88,27 @@
 		computed: {
 			listData () {
 				return this.originData.filter(item => {
-					return (!this.condition.identity || item.identity.toUpperCase().indexOf(this.condition.identity.toUpperCase()) !== -1) && (!this.condition.desc || item.desc.toUpperCase().indexOf(this.condition.desc.toUpperCase()) !== -1) && (!this.condition.status || item.configStatusCode === this.condition.status)
+					return (!this.condition.identity || item.identity.toUpperCase().indexOf(this.condition.identity.toUpperCase()) !== -1) && (!this.condition.describe || item.desc.toUpperCase().indexOf(this.condition.describe.toUpperCase()) !== -1) && (!this.condition.status || item.configStatusCode === this.condition.status)
 				})
 			}
 		},
 		methods: {
-			goConfig (identity) {
+			goConfig (row) {
+				row = row || {
+					identity: '',
+					configStatusCode: '2'
+				}
 				let params = {name: 'ContentView'}
-				if (identity) {
+				if (row.identity) {
 					params.query = {
-						identity: identity
+						identity: row.identity,
+						configStatusCode: row.configStatusCode
 					}
 				}
 				this.$router.push(params)
 			},
 			handleEdit (index, row) {
-				this.goConfig(row.identity)
+				this.goConfig(row)
 			},
 			handleDelete (index, row) {
 				this.$confirm('将会永久删除该配置项，是否继续').then(() => {
@@ -123,7 +133,13 @@
 								console.log(res.data)
 								this.originData = res.data.map(item => {
 									let rel = JSON.parse(item)
-									rel.statusText = '启动'
+									if (rel.configStatusCode === '1') {
+										rel.running = true
+										rel.statusText = '运行中...'
+									} else {
+										rel.running = false
+										rel.statusText = '启动'
+									}
 									return rel
 								})
 							} else {
@@ -135,16 +151,24 @@
 				let params = {
 					identity: row.identity,
 					interval: row.interval,
-					configStatusCode: '1'
+					configStatusCode: '1',
+					desc: row.desc
 				}
+				row.statusText = '启动中...'
 				Api.post('mission', params).then(res => {
 					if (res.code === 0) {
 						row.running = true
-						row.statusText = '运行中'
+						row.statusText = '运行中...'
 						row.configStatus = '启动'
 						row.configStatusCode = '1'
 					} else {
 						this.$alert(res.message)
+						row.statusText = '启动'
+					}
+				}, err => {
+					if (err) {
+						this.$alert('连接超时')
+						row.statusText = '启动'
 					}
 				})
 			},
@@ -152,7 +176,8 @@
 				let params = {
 					identity: row.identity,
 					interval: row.interval,
-					configStatusCode: '2'
+					configStatusCode: '2',
+					desc: row.desc
 				}
 				Api.post('mission', params).then(res => {
 					if (res.code === 0) {

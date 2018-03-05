@@ -61,6 +61,11 @@
 									</el-select>
 							</el-form-item>
 					</common-col>
+					<common-col :lot="4">
+						<el-form-item label="输出源字段" prop="cols">
+							<el-input type="textarea" v-model="ftpOutput.cols"></el-input>
+						</el-form-item>
+					</common-col>
 			</common-row>
 		<!--
 		<el-form-item label="保存文件名" prop="filename">

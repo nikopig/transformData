@@ -35,7 +35,7 @@
 				<common-col>
 						<div class="delete-box">
 								<!--<el-button type="primary" icon=""></el-button>-->
-								<el-button type="text" icon="el-icon-delete" size="mini" @click="del(id)"></el-button>
+								<el-button type="text" icon="el-icon-delete" size="mini" @click="del(filed.index)"></el-button>
 						</div>
 				</common-col>
 		</common-row>
@@ -54,11 +54,7 @@
 				components: {commonRow, commonCol},
 				methods: {
 						del (i) {
-							console.log(this.otherInput)
-								this.otherInput.splice(i, 1)
-								if (this.otherInput.length === 0) {
-										this.$emit('clear')
-								}
+							this.$emit('del', {index: i})
 						}
 				}
 		}

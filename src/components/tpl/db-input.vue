@@ -3,7 +3,7 @@
 				<common-row>
 						<common-col>
 								<el-form-item label="查询字段">
-										<el-input v-model="db.field"></el-input>
+										<el-input v-model="db.modifyCol"></el-input>
 								</el-form-item>
 						</common-col>
 						<common-col>

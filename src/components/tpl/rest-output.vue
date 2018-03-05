@@ -31,9 +31,14 @@
 								</el-form-item>
 						</common-col>
 						<common-col>
-								<el-form-item label="URL" prop="url">
-										<el-input v-model="restOutput.url"></el-input>
-								</el-form-item>
+							<el-form-item label="URL" prop="url">
+								<el-input v-model="restOutput.url"></el-input>
+							</el-form-item>
+						</common-col>
+						<common-col :lot="4">
+							<el-form-item label="输出源字段" prop="cols">
+								<el-input type="textarea" v-model="restOutput.cols"></el-input>
+							</el-form-item>
 						</common-col>
 				</common-row>
 

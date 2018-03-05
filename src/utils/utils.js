@@ -23,3 +23,16 @@ export function DateFtt (fmt, date, toNextDay, toBeforeDay) {
 	}
 	return fmt
 }
+
+
+// 取某两个子串中间的字符串
+// str  母字符串
+// left 左边子串
+// right 右边子串
+export function subSection (str, left, right) {
+    if (!str || !left) return ''
+    let len = str.length
+    let lPos = str.indexOf(left) + left.length
+    let rPos = right ? str.indexOf(right) : len
+    return str.substring(lPos, rPos)
+}

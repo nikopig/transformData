@@ -1,8 +1,10 @@
 import axios from 'axios'
 import qs from 'qs'
+import runConfig from './config'
+let baseUrl = runConfig.runType === 'dev' ? '/api/' : '/conduit/config/'
 axios.defaults.timeout = 5000 // 响应时间
-axios.defaults.headers.post['Content-Type'] =
-  'application/x-www-form-urlencoded;charset=UTF-8' // 配置请求头
+axios.defaults.withCredentials = true
+axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8' // 配置请求头
 // axios.defaults.baseURL = '' // 配置接口地址
 // POST传参序列化(添加请求拦截器)
 axios.interceptors.request.use(
@@ -11,6 +13,7 @@ axios.interceptors.request.use(
     if (config.method === 'post') {
       config.data = qs.stringify(config.data)
     }
+console.log(config)
     return config
   },
   error => {
@@ -49,14 +52,14 @@ export function fetch (url, params, type) {
   })
 }
 export default {
-	post (operator, params) {
-		let url = '/api/' + operator
-		return fetch(url, params, 'post')
-	},
-	get (operator, params) {
-		let url = '/api/' + operator
-		return fetch(url, params, 'get')
-	}
+    post (operator, params) {
+        let url = baseUrl + operator
+        return fetch(url, params, 'post')
+    },
+    get (operator, params) {
+        let url = baseUrl + operator
+        return fetch(url, params, 'get')
+    }
   // getDatabase (params) {
   //   return fetch('/config/getDatabase', params)
   // },

@@ -53,6 +53,11 @@
 									</el-select>
 							</el-form-item>
 					</common-col>
+					<common-col :lot="4">
+						<el-form-item label="输入源字段" prop="cols">
+							<el-input type="textarea" v-model="textInput.cols"></el-input>
+						</el-form-item>
+					</common-col>
 			</common-row>
 	</el-form>
 </template>

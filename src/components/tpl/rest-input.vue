@@ -57,12 +57,17 @@
 								</el-form-item>
 						</common-col>
 						<common-col>
-								<el-form-item label="请求方式" prop="request">
-										<el-select v-model="restInput.request" placeholder="请选择请求方式">
-												<el-option label="POST" value="POST"></el-option>
-												<el-option label="GET" value="GET"></el-option>
-										</el-select>
-								</el-form-item>
+							<el-form-item label="请求方式" prop="request">
+								<el-select v-model="restInput.request" placeholder="请选择请求方式">
+									<el-option label="POST" value="POST"></el-option>
+									<el-option label="GET" value="GET"></el-option>
+								</el-select>
+							</el-form-item>
+						</common-col>
+						<common-col :lot="4">
+							<el-form-item label="输入源字段" prop="cols">
+								<el-input type="textarea" v-model="restInput.cols"></el-input>
+							</el-form-item>
 						</common-col>
 				</common-row>
 		</el-form>

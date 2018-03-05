@@ -1,46 +1,49 @@
 <template>
-		<el-form ref="output_kafka" :model="kafkaOutput" label-width="100px" label-position="right">
-				<common-row>
-						<common-col>
-								<el-form-item label="数据类型" prop="datatype">
-										<el-select v-model="kafkaOutput.datatype" placeholder="请选择">
-												<el-option label="TEXT" value="TEXT"></el-option>
-												<el-option label="JSON" value="JSON"></el-option>
-												<el-option label="XML" value="XML"></el-option>
-										</el-select>
-								</el-form-item>
-						</common-col>
-						<common-col v-if="kafkaOutput.separator !== 'JSON'">
-								<el-form-item label="数据分隔符" prop="separator">
-										<el-input v-model="kafkaOutput.separator"></el-input>
-								</el-form-item>
-						</common-col>
-						<common-col :lot="2">
-								<el-form-item label="Servers" prop="servers">
-										<el-input v-model="kafkaOutput.servers"></el-input>
-								</el-form-item>
-						</common-col>
-						<common-col>
-								<el-form-item label="端口" prop="port">
-										<el-input v-model="kafkaOutput.port"></el-input>
-								</el-form-item>
-						</common-col>
-						<common-col>
-								<el-form-item label="Topic" prop="topic">
-										<el-input v-model="kafkaOutput.topic"></el-input>
-								</el-form-item>
-						</common-col>
-						<common-col>
-								<el-form-item label="GroupId" prop="groupId">
-										<el-input v-model="kafkaOutput.groupId"></el-input>
-								</el-form-item>
-						</common-col>
-						<common-col>
-								<el-form-item label="标识主键" prop="recordKeyCol">
-										<el-input v-model="kafkaOutput.recordKeyCol"></el-input>
-								</el-form-item>
-						</common-col>
-				</common-row>
+		<el-form ref="kafkaOutput" :model="kafkaOutput" :rules="rules" label-width="100px" label-position="right">
+			<common-row>
+				<common-col>
+					<el-form-item label="数据格式" prop="datatype">
+						<el-select v-model="kafkaOutput.datatype" placeholder="请选择">
+							<el-option label="TEXT" value="TEXT"></el-option>
+							<el-option label="JSON" value="JSON"></el-option>
+							<el-option label="XML" value="XML"></el-option>
+						</el-select>
+					</el-form-item>
+				</common-col>
+				<common-col v-if="kafkaOutput.datatype === 'TEXT'">
+					<el-form-item label="数据分隔符" prop="separator">
+						<el-input v-model="kafkaOutput.separator"></el-input>
+					</el-form-item>
+				</common-col>
+				<common-col>
+					<el-form-item label="集群地址" prop="outputKafkaBootstrapServers">
+						<el-input v-model="kafkaOutput.outputKafkaBootstrapServers"></el-input>
+					</el-form-item>
+				</common-col>
+				<common-col>
+					<el-form-item label="主题" prop="outputKafkaTopic">
+						<el-input v-model="kafkaOutput.outputKafkaTopic"></el-input>
+					</el-form-item>
+				</common-col>
+				<common-col>
+					<el-form-item label="流程名" prop="outputKafkaProcess">
+						<el-input v-model="kafkaOutput.outputKafkaProcess"></el-input>
+					</el-form-item>
+				</common-col>
+				<common-col>
+					<el-form-item label="集合方式输出" prop="isArray">
+						<el-select v-model="kafkaOutput.isArray" placeholder="请选择">
+							<el-option label="是" :value="true"></el-option>
+							<el-option label="否" :value="false"></el-option>
+						</el-select>
+					</el-form-item>
+				</common-col>
+				<common-col :lot="4">
+					<el-form-item label="输出源字段" prop="cols">
+						<el-input type="textarea" v-model="kafkaOutput.cols"></el-input>
+					</el-form-item>
+				</common-col>
+			</common-row>
 		</el-form>
 </template>
 
@@ -56,11 +59,12 @@
 				data () {
 						return {
 								rules: {
-										datatype: [
-												{required: true, message: '请选择数据类型json,text,xml', trigger: 'blur'}
-										],
-										separator: [{required: true, message: '请输入数据分割符', trigger: 'blur'}],
-										recordKeyCol: [{required: true, message: '请输入标识主键', trigger: 'blur'}]
+									datatype: [{required: true, message: '请选择数据格式', trigger: 'blur'}],
+									separator: [{required: true, message: '请输入数据分割符', trigger: 'blur'}],
+									outputKafkaBootstrapServers: [{required: true, message: '请选择集群地址', trigger: 'blur'}],
+									outputKafkaTopic: [{required: true, message: '请输入主题', trigger: 'blur'}],
+									isArray: [{required: true, message: '请输入集合方式输出', trigger: 'blur'}],
+									cols: [{required: true, message: '请输入输出源字段', trigger: 'blur'}]
 								}
 						}
 				}

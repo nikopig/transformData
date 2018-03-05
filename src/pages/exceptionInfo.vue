@@ -36,7 +36,7 @@
 							let params = {
 									timeStr: DateFtt('yyyy-MM-dd', this.form.date)
 							}
-							Api.post('getExpInfo', params)
+							Api.post('getRunLogInfo', params)
 									.then(res => {
 											if (res.code === 0) {
 													this.errorInfo = res.data

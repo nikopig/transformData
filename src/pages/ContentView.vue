@@ -3,7 +3,7 @@
 		<div class="common-condition-box">
 			<el-form ref="task" :model="task" :inline="true" :rules="taskRules">
 				<el-form-item label="任务标识名称" prop="name">
-					<el-input v-model="task.name" placeholder="只能输入字母和数字"></el-input>
+					<el-input v-model="task.name"></el-input>
 				</el-form-item>
 				<el-form-item label="任务描述" prop="describe">
 					<el-input v-model="task.describe"></el-input>
@@ -15,7 +15,8 @@
 					<el-button type="success" size="mini" @click="beforeSave">保存</el-button>
 					<el-button type="primary" size="mini" @click="start" :loading="running">{{statusText}}</el-button>
 					<el-button type="danger" size="mini" @click="stop">停止</el-button>
-					<el-button type="danger" size="mini" @click="getColsFromSQL">测试</el-button>
+					<el-button type="danger" size="mini" @click="getColsFromSQL" v-show="form.db.input==='DB'">刷新输入字段
+					</el-button>
 				</el-form-item>
 			</el-form>
 		</div>
@@ -24,16 +25,18 @@
 				<span class="el-icon-mo-accessoriesFiles">&nbsp;输入配置</span>
 				<div class="btn-box">
 					<!--绑定配置页面的按钮，暂时未启用-->
+					<el-button type="text" icon="el-icon-bell" @click="testConect" v-show="form.db.input==='DB'">连接测试
+					</el-button>
 					<!--<el-button type="text" icon="el-icon-mo-add"></el-button>-->
 					<!--<el-button type="text" icon="el-icon-mo-repair"></el-button>-->
 					<!--<el-button type="text" icon="el-icon-mo-cancle2"></el-button>-->
 				</div>
 				<div class="select-box">
 					<el-dropdown @command="handleCommand($event, 0)">
-												<span class="el-dropdown-link">
-														{{form.db.inputLabel}}<i
-														class="el-icon-arrow-down el-icon--right"></i>
-												</span>
+						<span class="el-dropdown-link">
+								{{form.db.inputLabel}}<i
+								class="el-icon-arrow-down el-icon--right"></i>
+						</span>
 						<el-dropdown-menu slot="dropdown">
 							<el-dropdown-item :command="item" v-for="(item, index) in form.db.data" :key="index">
 								{{item.label}}
@@ -54,8 +57,11 @@
 				<span class="el-icon-mo-breakDocuments">&nbsp;输出配置</span>
 				<div class="btn-box">
 					<!--绑定配置页面的按钮，暂时未启用-->
+					<el-button type="text" icon="el-icon-bell" @click="testOutConect" v-show="form.db.output==='DB'">
+						连接测试
+					</el-button>
 					<el-button type="text" icon="el-icon-plus" @click="addOtherColums">新增字段</el-button>
-					<!--<el-button type="text" icon="el-icon-mo-add"></el-button>-->
+					<el-button type="text" icon="el-icon-refresh" @click="setOutFields">刷入输出字段</el-button>
 					<!--<el-button type="text" icon="el-icon-mo-repair"></el-button>-->
 					<!--<el-button type="text" icon="el-icon-mo-cancle2"></el-button>-->
 				</div>
@@ -89,7 +95,7 @@
 				<el-col :span="24">
 					<el-row v-if="otherInput.length > 0">
 						<item-filed-other :filed.sync="item" v-for="(item,index) in otherInput" :key="index"
-										  @clear="showField = false"></item-filed-other>
+										  @del="delmap"></item-filed-other>
 					</el-row>
 				</el-col>
 			</div>
@@ -101,21 +107,22 @@
 	/* eslint-disable spaced-comment */
 	import commonRow from '@/common/components/common-row'
 	import commonCol from '@/common/components/common-col'
-	import DbInput from './tpl/db-input'
-	import DbOutput from './tpl/db-output'
-	import TextOutput from './tpl/text-output'
-	import TextInput from './tpl/text-input'
-	import FtpInput from './tpl/ftp-input'
-	import FtpOutput from './tpl/ftp-output'
-	import KafkaInput from './tpl/kafka-input'
-	import KafkaOutput from './tpl/kafka-output'
-	import RestOutput from './tpl/rest-output'
-	import RestInput from './tpl/rest-input'
-	import OracleInput from './tpl/oracle-input'
-	import OracleOutput from './tpl/oracle-output'
-	import ItemFiled from './common/ItemFiled'
-	import ItemFiledOther from './common/itemFiledOther'
+	import DbInput from '../components/tpl/db-input'
+	import DbOutput from '../components/tpl/db-output'
+	import TextOutput from '../components/tpl/text-output'
+	import TextInput from '../components/tpl/text-input'
+	import FtpInput from '../components/tpl/ftp-input'
+	import FtpOutput from '../components/tpl/ftp-output'
+	import KafkaInput from '../components/tpl/kafka-input'
+	import KafkaOutput from '../components/tpl/kafka-output'
+	import RestOutput from '../components/tpl/rest-output'
+	import RestInput from '../components/tpl/rest-input'
+	import OracleInput from '../components/tpl/oracle-input'
+	import OracleOutput from '../components/tpl/oracle-output'
+	import ItemFiled from '../components/common/ItemFiled'
+	import ItemFiledOther from '../components/common/itemFiledOther'
 	import Api from '@/utils/api.js'
+	import {subSection} from '@/utils/utils.js'
 
 	export default {
 		name: 'contentView',
@@ -131,7 +138,8 @@
 					interval: 30
 				},
 				taskRules: {
-					name: [{required: true, message: '请输入任务标识', trigger: 'blur'}]
+					name: [{required: true, message: '请输入任务标识', trigger: 'blur'}],
+					describe: [{required: true, message: '请输入任务描述', trigger: 'blur'}]
 				},
 				form: {
 					db: {
@@ -256,22 +264,19 @@
 					input: {
 						datatype: '',
 						separator: '',
-						servers: '',
-						cols: '',
-						groupId: '',
-						recordKeyCol: '',
-						port: '',
-						topic: ''
+						inputKafkaBootstrapServers: '',
+						inputKafkaGroupid: '',
+						inputKafkaTopic: '',
+						cols: ''
 					},
 					output: {
 						datatype: '',
 						separator: '',
-						servers: '',
-						cols: '',
-						groupId: '',
-						recordKeyCol: '',
-						port: '',
-						topic: ''
+						outputKafkaBootstrapServers: '',
+						outputKafkaTopic: '',
+						outputKafkaProcess: '',
+						isArray: '',
+						cols: ''
 					}
 				},
 				rest: {
@@ -330,6 +335,110 @@
 			}
 		},
 		methods: {
+			// 映射表删除
+			delmap (playoad) {
+				this.otherInput.splice(playoad.index, 1)
+				if (this.otherInput.length === 0) this.showField = false
+			},
+			// 刷入输出源字段
+			setOutFields () {
+				let outFields = this.otherInput.filter(item => item.output).map(item => item.output)
+				let rel = ''
+				if (outFields.length === 0) {
+					this.$alert('映射表中至少有一个输出字段才可以进行该操作')
+				} else {
+					rel = outFields.join(',')
+				}
+				if (this.form.db.output === 'DB') {
+					this.db.output.cols = rel
+				} else if (this.form.db.output === 'TEXT') {
+					this.text.output.cols = rel
+				} else if (this.form.db.output === 'FTP') {
+					this.ftp.output.cols = rel
+				} else if (this.form.db.output === 'REST') {
+					this.rest.output.cols = rel
+				} else if (this.form.db.output === 'KAFKA') {
+					this.kafka.output.cols = rel
+				}
+			},
+			// 刷入映射表输出字段
+			setOutMap () {
+				let outputStr = ''
+				if (this.form.db.output === 'DB') {
+					outputStr = this.db.output.cols
+				} else if (this.form.db.output === 'TEXT') {
+					outputStr = this.text.output.cols
+				} else if (this.form.db.output === 'FTP') {
+					outputStr = this.ftp.output.cols
+				} else if (this.form.db.output === 'REST') {
+					outputStr = this.rest.output.cols
+				} else if (this.form.db.output === 'KAFKA') {
+					outputStr = this.kafka.output.cols
+				}
+				if (!outputStr) return false
+				let outputArray = outputStr.split(',')
+				outputArray.map((item, index) => {
+					if (index < this.otherInput.length) {
+						this.otherInput[index].output = item
+					} else {
+						this.otherInput.push({
+							output: item,
+							input: '',
+							defaultValue: '',
+							index: index
+						})
+					}
+				})
+				// 展示映射表
+				if (this.otherInput.length > 0 && !this.showField) this.showField = true
+			},
+			validateProps (formObj, arr, cb) {
+				if (arr.length > 0) {
+					let prop = arr[0]
+					formObj.validateField(prop, valid => {
+						if (!valid) {
+							arr.splice(0, 1)
+							this.validateProps(formObj, arr, cb)
+						}
+					})
+				} else {
+					cb()
+				}
+			},
+			testConect () {
+				this.validateProps(this.$refs.input_db.$refs.db, ['url', 'username', 'password'], () => {
+					let params = {
+						url: this.db.input.url,
+						username: this.db.input.username,
+						password: this.db.input.password
+					}
+					Api.post('checkConnection', params)
+							.then(res => {
+								if (res.code === -1) {
+									this.$alert(res.message)
+									return false
+								}
+								this.$alert('输入源测试连接成功')
+							})
+				})
+			},
+			testOutConect () {
+				this.validateProps(this.$refs.output_db.$refs.db, ['url', 'username', 'password'], () => {
+					let params = {
+						url: this.db.output.url,
+						username: this.db.output.username,
+						password: this.db.output.password
+					}
+					Api.post('checkConnection', params)
+						.then(res => {
+							if (res.code === -1) {
+								this.$alert(res.message)
+								return false
+							}
+							this.$alert('输出源测试连接成功')
+						})
+				})
+			},
 			handleCommand (command, type) {
 				if (type === 0) {
 					this.form.db.input = command.value
@@ -355,52 +464,6 @@
 					this.db.selectDbFileds = tempArr
 				}
 			},
-			changeTable () {
-				let input = {}
-				if (this.form.db.input === 'db') {
-					this.db.dbFileds = []
-					input['input.type'] = this.form.db.input
-					input['input.username'] = this.db.input.username
-					input['input.password'] = this.db.input.password
-					input['input.url'] = this.db.input.url
-					input['input.port'] = this.db.input.port
-					input['input.database'] = this.db.selectDb
-					input['input.table'] = this.db.input.table
-					Api.getColumns(input).then(data => {
-						console.log(data)
-						data.forEach((item, index) => {
-							let column = {}
-							column.input = item
-							column.output = item
-							column.isdisabled = true
-							column.checked = false
-							this.db.dbFileds.push(column)
-							this.otherInput.push(column)
-						})
-					})
-				}
-				if (this.form.db.input === 'oracle') {
-					this.oracle.fileds = []
-					input['input.type'] = this.form.db.input
-					input['input.username'] = this.oracle.input.username
-					input['input.password'] = this.oracle.input.password
-					input['input.url'] = this.oracle.input.url
-					input['input.port'] = this.oracle.input.port
-					input['input.database'] = this.oracle.input.sid
-					input['input.table'] = this.oracle.input.table
-					//										input['input.table'] = '\'' + this.oracle.selectTable + '\''
-					Api.getColumns(input).then(data => {
-						data.forEach((item, index) => {
-							let column = {}
-							column.input = item
-							column.output = item
-							column.isdisabled = true
-							column.checked = false
-							this.oracle.fileds.push(column)
-						})
-					})
-				}
-			},
 			addColums () {
 				if (this.form.db.input === 'db' && this.db.dbFileds.length > 0) {
 					this.db.dbFileds.push({
@@ -416,16 +479,17 @@
 				this.otherInput.push({
 					output: '',
 					input: '',
-					defaultValue: ''
+					defaultValue: '',
+					index: this.otherInput.length
 				})
 				this.showField = true
 			},
 			beforeSave () {
-				if (!this.$route.query.identity || this.task.name === this.$route.query.identity) {
+				if ((!this.$route.query.identity || this.task.name !== this.$route.query.identity) && this.task.name) {
 					let params = {
 						identity: this.task.name
 					}
-					Api.get('checkIdentity', params)
+					Api.post('checkIdentity', params)
 						.then(res => {
 							if (res.code === -1) {
 								this.$confirm('任务名重复，是否覆盖')
@@ -443,8 +507,6 @@
 			save () {
 				let vad = true
 				let send = {}
-				let inputArray = []
-				let outputArray = []
 				send['configStatusCode'] = '2'
 				this.$refs.task.validate(valid => {
 					if (valid) {
@@ -465,6 +527,7 @@
 							send['input.db.sql'] = this.db.input.sql
 									? this.db.input.sql.replace(/\n+/g, '')
 									: ''
+							send['input.cols'] = this.db.input.cols
 							send['offset.col'] = this.db.input.field
 							send['offset.offset'] = this.db.input.offset
 							send['input.charset'] = this.db.input.charset
@@ -487,7 +550,9 @@
 							send['input.filetype'] = this.text.input.filetype
 							send['input.charset'] = this.text.input.charset
 							send['input.separator'] = this.text.input.separator
-							send['recordKeyCol'] = this.test.input.recordKeyCol
+							send['recordKeyCol'] = this.text.input.recordKeyCol
+							send['input.cols'] = this.text.input.cols
+							console.log(this.text)
 						} else {
 							vad = false
 						}
@@ -508,6 +573,7 @@
 							send['input.ftp.isHistory'] = this.ftp.input.isHistory
 							send['input.separator'] = this.ftp.input.separator
 							send['recordKeyCol'] = this.ftp.input.recordKeyCol
+							send['input.cols'] = this.ftp.input.cols
 						} else {
 							vad = false
 						}
@@ -525,6 +591,7 @@
 							send['input.charset'] = this.rest.input.charset
 							send['input.rest.request'] = this.rest.input.request
 							send['recordKeyCol'] = this.rest.input.recordKeyCol
+							send['input.cols'] = this.rest.input.cols
 						} else {
 							vad = false
 						}
@@ -534,28 +601,15 @@
 						if (valid) {
 							send['input.datatype'] = this.kafka.input.datatype
 							send['input.separator'] = this.kafka.input.separator
-							send['input.servers'] = this.kafka.input.servers
-							send['input.port'] = this.kafka.input.port
-							send['input.topic'] = this.kafka.input.topic
-							send['input.groupId'] = this.kafka.input.groupId
-							send['input.recordKeyCol'] = this.kafka.input.recordKeyCol
+							send['inputKafkaBootstrapServers'] = this.kafka.input.inputKafkaBootstrapServers
+							send['inputKafkaGroupid'] = this.kafka.input.inputKafkaGroupid
+							send['inputKafkaTopic'] = this.kafka.input.inputKafkaTopic
+							send['input.cols'] = this.kafka.input.cols
 						} else {
 							vad = false
 						}
 					})
 				}
-				this.otherInput.forEach(item => {
-					outputArray.push(item.output)
-					if (!item.input) {
-						inputArray.push('__EMPTY__')
-					} else {
-						inputArray.push(item.input)
-					}
-					send['convert.' + item.output] = item.input + ',' + item.defaultValue
-				})
-				send['input.cols'] = inputArray.join(',')
-				send['output.cols'] = outputArray.join(',')
-				send['output.type'] = this.form.db.output
 				if (this.form.db.output === 'DB') {
 					this.$refs.output_db.$refs.db.validate(valid => {
 						if (valid) {
@@ -564,6 +618,7 @@
 							send['output.url'] = this.db.output.url
 							send['output.table'] = this.db.output.table
 							send['output.db.keys'] = this.db.output.key
+							send['output.cols'] = this.db.output.cols
 						} else {
 							vad = false
 						}
@@ -573,11 +628,11 @@
 						if (valid) {
 							send['output.datatype'] = this.kafka.output.datatype
 							send['output.separator'] = this.kafka.output.separator
-							send['output.servers'] = this.kafka.output.servers
-							send['output.port'] = this.kafka.output.port
-							send['output.topic'] = this.kafka.output.topic
-							send['output.groupId'] = this.kafka.output.groupId
-							send['output.recordKeyCol'] = this.kafka.output.recordKeyCol
+							send['outputKafkaBootstrapServers'] = this.kafka.output.outputKafkaBootstrapServers
+							send['outputKafkaTopic'] = this.kafka.output.outputKafkaTopic
+							send['outputKafkaProcess'] = this.kafka.output.outputKafkaProcess
+							send['output.isArray'] = this.kafka.output.isArray
+							send['output.cols'] = this.kafka.output.cols
 						} else {
 							vad = false
 						}
@@ -589,6 +644,7 @@
 							send['output.datatype'] = this.text.output.datatype
 							send['output.separator'] = this.text.output.separator
 							send['output.filename'] = this.text.output.filename
+							send['output.cols'] = this.text.output.cols
 						} else {
 							vad = false
 						}
@@ -607,6 +663,7 @@
 							send['output.charset'] = this.ftp.output.charset
 							send['outputFilenamePrefix'] = this.ftp.output.prefix
 							send['output.json.array'] = this.ftp.output.isArray
+							send['output.cols'] = this.ftp.output.cols
 						} else {
 							vad = false
 						}
@@ -622,7 +679,23 @@
 						}
 					})
 				}
-				if (!vad) return false
+				this.otherInput.forEach(item => {
+//					if ()
+//					outputArray.push(item.output)
+//					if (!item.input) {
+//						inputArray.push('__EMPTY__')
+//					} else {
+//						inputArray.push(item.input)
+//					}
+					if (item.output) {
+						send['convert.' + item.output] = item.input + ',' + item.defaultValue
+					}
+				})
+				if (!vad) {
+					this.$alert('请填写完整配置')
+					return false
+				}
+				send['output.type'] = this.form.db.output
 				Api.post('getConfigInfo', send).then(res => {
 					if (res.code === 0) {
 						this.$alert('保存服务配置成功')
@@ -651,16 +724,14 @@
 			},
 			getData () {
 				let params = {
-					identity: this.task.identity
+					identity: this.task.name
 				}
-				console.log('启动了。。。')
 				Api.post('getConfigInfoToUpdate', params).then(res => {
 					if (res.code === -1) {
 						this.$alert(res.message)
 						return false
 					}
 					res = this.GenerateJson(res.data)
-					console.log(res)
 					this.task.name = res['identity']
 					this.task.describe = res['desc']
 					this.task.interval = res['interval']
@@ -680,6 +751,7 @@
 						this.db.input.field = res['offset.col']
 						this.db.input.offset = res['offset.offset']
 						this.db.input.charset = res['input.charset']
+						this.db.input.cols = res['input.cols']
 					} else if (this.form.db.input === 'TEXT') {
 						this.text.input.filepath = res['input.filepath']
 						this.text.input.offsetFile = res['offset.name']
@@ -688,6 +760,7 @@
 						this.text.input.filetype = res['input.filetype']
 						this.text.input.charset = res['input.charset']
 						this.text.input.separator = res['input.separator']
+						this.text.input.cols = res['input.cols']
 					} else if (this.form.db.input === 'FTP') {
 						this.ftp.input.username = res['input.username']
 						this.ftp.input.password = res['input.password']
@@ -700,6 +773,7 @@
 						this.ftp.input.charset = res['input.charset']
 						this.ftp.input.isHistory = res['input.ftp.isHistory']
 						this.ftp.input.separator = res['input.separator']
+						this.ftp.input.cols = res['input.cols']
 					} else if (this.form.db.input === 'REST') {
 						this.rest.input.url = res['input.url']
 						this.rest.input.datatype = res['input.datatype']
@@ -711,30 +785,44 @@
 						this.rest.input.dataParam = res['input.rest.dataParam']
 						this.rest.input.charset = res['input.charset']
 						this.rest.input.request = res['input.rest.request']
+						this.rest.input.cols = res['input.cols']
 					} else if (this.form.db.input === 'KAFKA') {
 						this.kafka.input.datatype = res['input.datatype']
 						this.kafka.input.separator = res['input.separator']
-						this.kafka.input.servers = res['input.servers']
-						this.kafka.input.port = res['input.port']
-						this.kafka.input.topic = res['input.topic']
-						this.kafka.input.groupId = res['input.groupId']
-						this.kafka.input.recordKeyCol = res['input.recordKeyCol']
+						this.kafka.input.inputKafkaBootstrapServers = res['inputKafkaBootstrapServers']
+						this.kafka.input.inputKafkaGroupid = res['inputKafkaGroupid']
+						this.kafka.input.inputKafkaTopic = res['inputKafkaTopic']
+						this.kafka.input.cols = res['input.cols']
 					}
 					this.otherInput = []
-					if (res['output.cols'] && res['output.cols'].length > 0) {
-						let inputArray = res['input.cols'].split(',')
-						let outputArray = res['output.cols'].split(',')
-						console.log(inputArray, outputArray)
-						outputArray.forEach((item, index) => {
-							let temp = {}
-							temp.output = item
-							temp.input = index >= inputArray.length ? '' : inputArray[index]
-							let defaultStr = res['convert.' + temp.output]
-							let pos = defaultStr.indexOf(',')
-							temp.defaultValue = defaultStr.substring(pos + 1)
-							this.otherInput.push(temp)
-						})
-					}
+					let mapData = Object.keys(res).filter(item => {
+						return item.indexOf('convert.') !== -1
+					})
+					mapData.forEach((item, index) => {
+						let temp = {}
+						temp.output = subSection(item, 'convert.')
+						let val = res[item]
+						temp.input = val.split(',')[0]
+						temp.defaultValue = subSection(val, ',')
+						temp.index = index
+						this.otherInput.push(temp)
+					})
+//					if (res['output.cols'] && res['output.cols'].length > 0) {
+//						let inputArray = res['input.cols'].split(',')
+//						let outputArray = res['output.cols'].split(',')
+//						console.log(inputArray, outputArray)
+//						outputArray.forEach((item, index) => {
+//							let temp = {}
+//							temp.output = item
+//							temp.input = index >= inputArray.length ? '' : inputArray[index]
+//							temp.index = index
+//							let defaultStr = res['convert.' + temp.output]
+//							console.log(temp.output, defaultStr)
+//							let pos = defaultStr.indexOf(',')
+//							temp.defaultValue = defaultStr.substring(pos + 1)
+//							this.otherInput.push(temp)
+//						})
+//					}
 					this.form.db.output = res['output.type']
 					let pos1 = this.getIndexOfItem(this.form.db.data, {value: res['output.type']})
 					this.form.db.outputLabel = this.form.db.data[pos1].label
@@ -744,11 +832,13 @@
 						this.db.output.url = res['output.url']
 						this.db.output.table = res['output.table']
 						this.db.output.key = res['output.db.keys']
+						this.db.output.cols = res['output.cols']
 					} else if (this.form.db.output === 'TEXT') {
 						this.text.output.filepath = res['output.filepath']
 						this.text.output.datatype = res['output.datatype']
 						this.text.output.separator = res['output.separator']
 						this.text.output.filename = res['output.filename']
+						this.text.output.cols = res['output.cols']
 					} else if (this.form.db.output === 'FTP') {
 						this.ftp.output.username = res['output.username']
 						this.ftp.output.password = res['output.password']
@@ -761,30 +851,44 @@
 						this.ftp.output.prefix = res['outputFilenamePrefix']
 						this.ftp.output.charset = res['output.charset']
 						this.ftp.output.isArray = res['output.json.array']
+						this.ftp.output.cols = res['output.cols']
 					} else if (this.form.db.output === 'REST') {
 						this.rest.output.url = res['output.url']
 						this.rest.output.datatype = res['output.datatype']
 						this.rest.output.separator = res['output.separator']
+						this.rest.output.cols = res['output.cols']
 					} else if (this.form.db.output === 'KAFKA') {
 						this.kafka.output.datatype = res['output.datatype']
 						this.kafka.output.separator = res['output.separator']
-						this.kafka.output.servers = res['output.servers']
-						this.kafka.output.port = res['output.port']
-						this.kafka.output.topic = res['output.topic']
-						this.kafka.output.groupId = res['output.groupId']
-						this.kafka.output.recordKeyCol = res['output.recordKeyCol']
+						this.kafka.output.outputKafkaBootstrapServers = res['outputKafkaBootstrapServers']
+						this.kafka.output.outputKafkaTopic = res['outputKafkaTopic']
+						this.kafka.output.outputKafkaProcess = res['outputKafkaProcess']
+						this.kafka.output.isArray = res['output.isArray']
+						this.kafka.output.cols = res['output.cols']
 					}
 				})
 			},
 			// TODO: 获取字段插入到InputMapping表单。
 			getColsFromSQL () {
+				if (this.db.input.sql.indexOf(';') !== -1) {
+					this.$alert('sql语句中不能有分号，请检查')
+					return false
+				}
 				let params = {
-					'input.sql': this.db.input.sql
+					'input.sql': this.db.input.sql,
+					'input.url': this.db.input.url,
+					'input.username': this.db.input.username,
+					'input.password': this.db.input.password
 				}
 				Api.post('getCols', params).then(res => {
-					if (res.data.length > 0) {
+					if (res.code !== 0) {
+						this.$alert(res.message)
+						return false
+					}
+					if (res.data && res.data.length > 0) {
 						this.otherInput = []
 						this.$alert(res.message)
+						this.db.input.cols = res.data.join(',')
 						res.data.forEach(item => {
 							this.otherInput.push({
 								output: '',
@@ -797,10 +901,12 @@
 				})
 			},
 			start () {
+				this.statusText = '启动中...'
 				let params = {
 					identity: this.task.name,
 					interval: this.task.interval,
-					configStatusCode: '1'
+					configStatusCode: '1',
+					desc: this.task.describe
 				}
 				this.$refs.task.validate(valid => {
 					if (valid) {
@@ -808,8 +914,9 @@
 							if (res.code === 0) {
 								this.$alert('服务启动成功')
 								this.running = true
-								this.statusText = '运行中'
+								this.statusText = '运行中...'
 							} else {
+								this.statusText = '启动'
 								this.$alert(res.message)
 							}
 						})
@@ -822,7 +929,8 @@
 				let params = {
 					identity: this.task.name,
 					interval: this.task.interval,
-					configStatusCode: '2'
+					configStatusCode: '2',
+					desc: this.task.describe
 				}
 				this.$refs.task.validate(valid => {
 					if (valid) {
@@ -853,7 +961,14 @@
 			init () {
 				//	this.$route.query.identity = '111'
 				if (this.$route.query.identity) {
-					this.task.identity = this.$route.query.identity
+					this.task.name = this.$route.query.identity
+					if (this.$route.query.configStatusCode === '1') {
+						this.running = true
+						this.statusText = '运行中...'
+					} else {
+						this.running = false
+						this.statusText = '启动'
+					}
 					this.getData()
 				}
 			}
@@ -993,141 +1108,3 @@
 		}
 	}
 </style>
-<!--<style>-->
-<!--.content-view {-->
-<!--margin: 15px;-->
-<!--padding-bottom: 200px;-->
-<!--}-->
-
-<!--.dash {-->
-<!--border-bottom: 1px dashed #d8dce5;-->
-<!--margin: 15px 0;-->
-<!--}-->
-
-<!--.btn-get {-->
-<!--display: block;-->
-<!--width: 100%;-->
-<!--position: fixed;-->
-<!--padding-bottom: 15px;-->
-<!--bottom: 0;-->
-<!--text-align: center;-->
-<!--background: #fff;-->
-<!--}-->
-
-<!--.item-header {-->
-<!--display: flex;-->
-<!--}-->
-
-<!--.item-body {-->
-<!--flex: 1;-->
-<!--text-align: center;-->
-<!--}-->
-
-<!--.content-view .el-input__inner {-->
-<!--height: 24px;-->
-<!--}-->
-
-<!--.content-view .head {-->
-<!--margin-bottom: 15px;-->
-<!--}-->
-
-<!--.content-view .head span {-->
-<!--color: #A1A8B8;-->
-<!--}-->
-
-<!--.content-view .head span:before {-->
-<!--margin-right: 5px;-->
-<!--}-->
-
-<!--.content-view .top {-->
-<!--padding: 20px 20px 0;-->
-<!--margin-bottom: 15px;-->
-<!--background: #F4F5F7;-->
-<!--}-->
-
-<!--.content-view .top .wrapper {-->
-<!--line-height: 40px;-->
-<!--}-->
-
-<!--.el-button&#45;&#45;small {-->
-<!--padding: 7px 9px;-->
-<!--border-radius: 4px;-->
-<!--}-->
-
-<!--.content-view .top .save {-->
-<!--background-color: #50bfff;-->
-<!--border-color: #50bfff;-->
-<!--}-->
-
-<!--.content-view .top .save:hover {-->
-<!--background: #73ccff;-->
-<!--border-color: #73ccff;-->
-<!--}-->
-
-<!--.content-view .inpOut .el-form-item__label {-->
-<!--font-size: 12px;-->
-<!--}-->
-
-<!--.content-view .inpOut > div {-->
-<!--padding: 0 20px 0 5px;-->
-<!--border: 1px solid #ddd;-->
-<!--}-->
-
-<!--.content-view .out {-->
-<!--float: right;-->
-<!--}-->
-
-<!--.content-view .el-select {-->
-<!--width: 100%;-->
-<!--}-->
-
-<!--.content-view .el-autocomplete {-->
-<!--display: block;-->
-<!--}-->
-
-<!--.content-view .el-button&#45;&#45;text {-->
-<!--color: #5a5e66;-->
-<!--}-->
-
-<!--.content-view .topTool {-->
-<!--position: relative;-->
-<!--margin: 0 0 20px 20px;-->
-<!--line-height: 38px;-->
-<!--border-bottom: 1px solid #ddd;-->
-<!--}-->
-
-<!--.content-view .topTool span {-->
-<!--color: #A1A8B8;-->
-<!--}-->
-
-<!--.content-view .topTool span:before {-->
-<!--margin-right: 5px;-->
-<!--}-->
-
-<!--.content-view .btnBox {-->
-<!--display: inline;-->
-<!--position: absolute;-->
-<!--right: 0;-->
-<!--top: 0;-->
-<!--}-->
-
-<!--.item-body {-->
-<!--font-size: 12px;-->
-<!--}-->
-
-<!--.item-body, .item-filed-item {-->
-<!--margin: 0 10px;-->
-<!--}-->
-
-<!--.item-body:first-child, .item-filed-item:first-child {-->
-<!--margin-left: 0;-->
-<!--}-->
-
-<!--.item-filed-item .el-button&#45;&#45;small {-->
-<!--width: 100%;-->
-<!--}-->
-
-<!--.el-input, .el-textarea__inner {-->
-<!--font-size: 12px;-->
-<!--}-->
-<!--</style>-->

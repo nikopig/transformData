@@ -25,6 +25,11 @@
 									<el-autocomplete v-model="textOutput.url" placeholder="对应的连接字符串"></el-autocomplete>
 							</el-form-item>
 					</common-col>
+					<common-col :lot="4">
+						<el-form-item label="输出源字段" prop="cols">
+							<el-input type="textarea" v-model="textOutput.cols"></el-input>
+						</el-form-item>
+					</common-col>
 			</common-row>
 		<!--<el-form-item label="字段及默认值" prop="defField">-->
 			    <!--<el-input type="textarea" v-model="textOutput.defField" placeholder="col1:v1,col2:v2,col3:v3"></el-input>-->
